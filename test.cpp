@@ -14,7 +14,6 @@ using namespace std;
 namespace test {
 
 vector<string> inputstrings;
-vector<PyObject *> callbacks;
 
 unsigned square(unsigned number) {
 	return number * number;
@@ -24,12 +23,9 @@ void process_input(string s) {
 	if (s == "p") {
 		py_interact();
 	} else {
-		cout << "input: " << s << endl;
+		s = py_invoke_callbacks(s);
 		inputstrings.push_back(s);
-
-		for(PyObject *callback: callbacks) {
-			py_invoke_callback(callback, s);
-		}
+		cout << "processed input: " << s << endl;
 	}
 }
 
@@ -43,7 +39,7 @@ public:
 		PyInit_interface();
 
 		// setup module import path
-		py_setup_path();
+		py_init("");
 	}
 
 	~PyInterp() {
@@ -56,6 +52,8 @@ public:
 int main(int argc, char **argv) {
 	test::PyInterp i;
 
+	cout << "interp initialized" << endl;
+
 	test::Args args = py_handle_args(argc, argv);
 
 	if (args.exit) {
@@ -63,6 +61,8 @@ int main(int argc, char **argv) {
 	}
 
 	py_print_square(args.thatnumber);
+
+	cout << "type p to enter interactive python interp, anything else to add strings" << endl;
 
 	while (true) {
 		string l;

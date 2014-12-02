@@ -5,7 +5,6 @@ from cpython.ref cimport PyObject
 
 cdef extern from "test.h" namespace "test":
     unsigned square(unsigned num)
-    void add_callback(PyObject *fun)
 
     struct Args:
         int exit
@@ -13,4 +12,3 @@ cdef extern from "test.h" namespace "test":
         int thatnumber
 
     vector[string] inputstrings
-    vector[PyObject *] callbacks

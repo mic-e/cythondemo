@@ -24,7 +24,6 @@ public:
 unsigned square(unsigned number);
 
 extern std::vector<std::string> inputstrings;
-extern std::vector<PyObject *> callbacks;
 
 } // namespace test
 

@@ -1,15 +1,13 @@
-from decl cimport PyObject
+from libcpp.string cimport string
+from libcpp.vector cimport vector
 from decl cimport square as c_square
-from decl cimport add_callback as c_add_callback
 from decl cimport Args as c_Args
 from decl cimport inputstrings as c_inputstrings
-from decl cimport callbacks as c_callbacks
-from libcpp.string cimport string
 
 
-cdef public void py_setup_path():
+cdef public void py_init(string modulepath):
     import sys
-    sys.path.insert(0, '')
+    sys.path.insert(0, modulepath.decode())
 
 
 cdef public c_Args py_handle_args(int c_argc, char **c_argv):
@@ -24,6 +22,7 @@ cdef public c_Args py_handle_args(int c_argc, char **c_argv):
     sys.argv = argv
 
     import pymod
+
     try:
         args = pymod.handle_args()
         retval.exit = 0
@@ -53,15 +52,19 @@ def append_string(s):
     c_inputstrings.push_back(s)
 
 
-def add_callback(f):
-    if not callable(f):
-        raise Exception("not callable")
-
-    c_callbacks.push_back(<PyObject *> f)
+callbacks = []
 
 
-cdef public void py_invoke_callback(PyObject *f, string s):
-    try:
-        (<object> f)(s)
-    except Exception as e:
-        print(e)
+cdef public string py_invoke_callbacks(string s):
+    cdef string ret
+
+    for cb in callbacks:
+        try:
+            ret = cb(s)
+            if ret.size():
+                s = ret
+        except:
+            import traceback
+            print(traceback.format_exc())
+
+    return s

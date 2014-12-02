@@ -2,7 +2,7 @@ import code
 
 namespace = {}
 
-def init():
+def init_prompt():
     import rlcompleter
     import readline
     import atexit
@@ -20,20 +20,17 @@ def init():
     if os.path.exists(history):
         readline.read_history_file(history)
 
-    if os.path.exists(history):
-        readline.read_history_file(history)
-
     atexit.register(save_history)
 
     readline.set_completer(rlcompleter.Completer(namespace).complete)
     readline.parse_and_bind("tab: complete")
 
-    print("pymod init done")
+    exec("import interface", namespace)
 
-init()
+init_prompt()
 
 def interact():
-    code.interact('openage console', local=namespace)
+    code.interact("", local=namespace)
 
 def handle_args():
     import argparse
