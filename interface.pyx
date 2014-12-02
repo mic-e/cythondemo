@@ -5,6 +5,8 @@ from .test cimport Args as c_Args
 from .test cimport square as c_square
 from .test cimport inputstrings as c_inputstrings
 
+import traceback
+
 
 def main(args):
     cdef c_Args c_args
@@ -13,8 +15,11 @@ def main(args):
 
 
 cdef public void py_interact():
-    import pymod
-    pymod.interact()
+    try:
+        from .prompt import interact
+        interact()
+    except:
+        traceback.print_exc()
 
 
 def square(unsigned number):
@@ -42,11 +47,10 @@ cdef public string py_invoke_callbacks(string s):
 
     for cb in callbacks:
         try:
-            ret = cb(s)
+            ret = cb(s.decode()).encode()
             if ret.size():
                 s = ret
         except:
-            import traceback
-            print(traceback.format_exc())
+            traceback.print_exc()
 
     return s
