@@ -1,16 +1,14 @@
 import code
+import readline
+import rlcompleter
+import os
+import sys
 
 namespace = {}
 
-def init_prompt():
-    import rlcompleter
-    import readline
-    import atexit
-    import os
-    import sys
 
-    sys.ps1 = '\x01\x1b[36m\x02>>>\x01\x1b[m\x02 '
-    sys.ps2 = '\x01\x1b[36m\x02...\x01\x1b[m\x02 '
+def init_readline():
+    import atexit
 
     history = "/tmp/oahistory"
 
@@ -25,12 +23,26 @@ def init_prompt():
     readline.set_completer(rlcompleter.Completer(namespace).complete)
     readline.parse_and_bind("tab: complete")
 
-    exec("import main", namespace)
+
+def init_prompt():
+    sys.ps1 = '\x01\x1b[36m\x02>>>\x01\x1b[m\x02 '
+    sys.ps2 = '\x01\x1b[36m\x02...\x01\x1b[m\x02 '
+
+    if readline.get_current_history_length():
+        # it seems like this was launched froma n interactive session,
+        # and already has a histfile...
+        pass
+    else:
+        init_readline()
+
+    exec("from . import interface", namespace)
 
 init_prompt()
 
+
 def interact():
     code.interact("", local=namespace)
+
 
 def handle_args():
     import argparse

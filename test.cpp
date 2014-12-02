@@ -10,7 +10,7 @@
 // for some reason DL_IMPORT isn't defined on my system...
 #define DL_IMPORT(x) x
 #endif
-#include "main.h"
+#include "interface.h"
 
 using namespace std;
 
@@ -33,6 +33,8 @@ void process_input(string s) {
 }
 
 int main(Args args) {
+	//asm volatile ("int3;");
+
 	py_print_square(args.thatnumber);
 
 	cout << "type p to enter interactive python interp, anything else to add strings" << endl;

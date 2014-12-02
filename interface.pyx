@@ -1,18 +1,14 @@
 from libcpp.string cimport string
 
-from test cimport main as c_main
-from test cimport Args as c_Args
-from test cimport square as c_square
-from test cimport inputstrings as c_inputstrings
+from .test cimport main as c_main
+from .test cimport Args as c_Args
+from .test cimport square as c_square
+from .test cimport inputstrings as c_inputstrings
 
-def main():
+
+def main(args):
     cdef c_Args c_args
-
-    import pymod
-    args = pymod.handle_args()
-
     c_args.thatnumber = args.thatnumber
-
     c_main(c_args)
 
 

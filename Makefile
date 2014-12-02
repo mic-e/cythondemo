@@ -3,34 +3,29 @@ PYTHONLIBDIR=/usr/lib/x86_64-gnu
 PYTHONINCDIR=/usr/include/$(PYTHON)
 CXX=g++
 CXXFLAGS=-std=c++11 -Wall -Wextra -pedantic -fPIC -O1 -g -I$(PYTHONINCDIR)
-LDFLAGS=--shared #-l$(PYTHON) -L$(PYTHONLIBDIR) --shared
+LDFLAGS=--shared
+MODLDFLAGS=-Wl,-rpath,.
 CYTHON=cython
+CYTHONFLAGS=--gdb --cplus -3 --fast-fail
 
 .PHONY: all
-all: main.so
-#interface.so
+all: interface.so libtest.so
 
-main.cpp main.h: main.pyx
-	$(CYTHON) --gdb --cplus -3 $<
+interface.cpp interface.h: interface.pyx
+	$(CYTHON) $(CYTHONFLAGS) $<
 
-#interface.cpp interface.h: interface.pyx
-#	$(CYTHON) --gdb --cplus -3 $<
-
-test.o: test.cpp test.h main.h
+test.o: test.cpp test.h interface.h
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-main.o: main.cpp test.h
+interface.o: interface.cpp test.h
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-#interface.o: interface.cpp interface.h test.h
-#	$(CXX) $(CXXFLAGS) -c $< -o $@
-
-main.so: test.o main.o
+libtest.so: test.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
 
-#interface.so: interface.o
-#	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
+interface.so: interface.o libtest.so
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@ $(MODLDFLAGS)
 
 .PHONY: clean
 clean:
-	rm -rf interface.cpp interface.h main.cpp *.o cython_debug *.so
+	rm -rf interface.cpp interface.h interface.cpp *.o cython_debug *.so
