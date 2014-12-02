@@ -7,28 +7,29 @@ LDFLAGS=--shared #-l$(PYTHON) -L$(PYTHONLIBDIR) --shared
 CYTHON=cython
 
 .PHONY: all
-all: main.so interface.so
+all: main.so
+#interface.so
 
-main.cpp: main.pyx
+main.cpp main.h: main.pyx
 	$(CYTHON) --gdb --cplus -3 $<
 
-interface.cpp interface.h: interface.pyx
-	$(CYTHON) --gdb --cplus -3 $<
+#interface.cpp interface.h: interface.pyx
+#	$(CYTHON) --gdb --cplus -3 $<
 
-test.o: test.cpp interface.h test.h
+test.o: test.cpp test.h main.h
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 main.o: main.cpp test.h
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-interface.o: interface.cpp interface.h test.h
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+#interface.o: interface.cpp interface.h test.h
+#	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 main.so: test.o main.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
 
-interface.so: interface.o
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
+#interface.so: interface.o
+#	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
 
 .PHONY: clean
 clean:

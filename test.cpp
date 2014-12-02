@@ -6,8 +6,11 @@
 
 #include "test.h"
 
+#ifndef DL_IMPORT
+// for some reason DL_IMPORT isn't defined on my system...
 #define DL_IMPORT(x) x
-#include "interface.h"
+#endif
+#include "main.h"
 
 using namespace std;
 

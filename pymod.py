@@ -25,7 +25,7 @@ def init_prompt():
     readline.set_completer(rlcompleter.Completer(namespace).complete)
     readline.parse_and_bind("tab: complete")
 
-    exec("import interface", namespace)
+    exec("import main", namespace)
 
 init_prompt()
 
