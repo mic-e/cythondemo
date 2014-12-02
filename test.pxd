@@ -1,6 +1,5 @@
 from libcpp.vector cimport vector
 from libcpp.string cimport string
-from cpython.ref cimport PyObject
 
 
 cdef extern from "test.h" namespace "test":
@@ -12,3 +11,5 @@ cdef extern from "test.h" namespace "test":
         int thatnumber
 
     vector[string] inputstrings
+
+    int main(Args args)

@@ -1,37 +1,7 @@
 from libcpp.string cimport string
-from libcpp.vector cimport vector
-from decl cimport square as c_square
-from decl cimport Args as c_Args
-from decl cimport inputstrings as c_inputstrings
-
-
-cdef public void py_init(string modulepath):
-    import sys
-    sys.path.insert(0, modulepath.decode())
-
-
-cdef public c_Args py_handle_args(int c_argc, char **c_argv):
-    cdef c_Args retval
-
-    argv = list()
-
-    for i in range(c_argc):
-        argv.append(c_argv[i].decode())
-
-    import sys
-    sys.argv = argv
-
-    import pymod
-
-    try:
-        args = pymod.handle_args()
-        retval.exit = 0
-        retval.thatnumber = args.thatnumber
-    except SystemExit as e:
-        retval.exit = 1
-        retval.exitcode = e.args[0]
-
-    return retval
+from test cimport square as c_square
+from test cimport Args as c_Args
+from test cimport inputstrings as c_inputstrings
 
 
 cdef public void py_interact():

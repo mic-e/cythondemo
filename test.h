@@ -25,6 +25,8 @@ unsigned square(unsigned number);
 
 extern std::vector<std::string> inputstrings;
 
+int main(Args args);
+
 } // namespace test
 
 #endif

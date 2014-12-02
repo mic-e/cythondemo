@@ -29,37 +29,7 @@ void process_input(string s) {
 	}
 }
 
-class PyInterp {
-public:
-	PyInterp() {
-		Py_Initialize();
-
-		// init routines for all pyx modules
-		// TODO this returns the module object... do something with it?
-		PyInit_interface();
-
-		// setup module import path
-		py_init("");
-	}
-
-	~PyInterp() {
-		Py_Finalize();
-	}
-};
-
-} // namespace test
-
-int main(int argc, char **argv) {
-	test::PyInterp i;
-
-	cout << "interp initialized" << endl;
-
-	test::Args args = py_handle_args(argc, argv);
-
-	if (args.exit) {
-		return args.exitcode;
-	}
-
+int main(Args args) {
 	py_print_square(args.thatnumber);
 
 	cout << "type p to enter interactive python interp, anything else to add strings" << endl;
@@ -80,3 +50,6 @@ int main(int argc, char **argv) {
 
 	return 0;
 }
+
+} // namespace test
+
