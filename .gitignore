@@ -1,0 +1,9 @@
+.*.swp
+*.o
+interface.h
+interface.cpp
+main
+__pycache__
+*.pyo
+*.pyc
+cython_debug
