@@ -4,8 +4,8 @@ Basic design
 ------------
 
 - The game becomes a library (`libtest.so`).
+- For each `.h` file, a `.pxd` file is generated from header annotations (see `pxdgen.py`). The `.pxd` files can then be included from `.pyx` files.
 - Each `.pyx` file is compiled to a `.cpp` file by Cython, then linked with `libtest.so` to a `.so` python extension module.
-- Each `C++` `.h` file is accompanied by a `.pxd` file that contains equivalent declarations, for inclusion from `.pyx` files.
 - Pure python modules can import `.pyx` extension modules at run-time; that way they can access any `C++` functions that are wrapped there.
 - During their initialization, the `.pyx` modules store pointers to their `cdef` functions in `py_functions.cpp`. Before initializion, those function pointers hold dummies.
 - Due to the last point, all `.pyx` modules that register function pointers __MUST__ be manually imported before transferring control to `C++` code.
