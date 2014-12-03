@@ -7,6 +7,7 @@ LDFLAGS=--shared
 MODLDFLAGS=-Wl,-rpath,.
 CYTHON=cython
 CYTHONFLAGS=--gdb --cplus -3 --fast-fail
+PXDGEN=python3 pxdgen.py
 
 .PHONY: all
 all: libtest.so if_math.so if_main.so if_strings.so
@@ -22,7 +23,13 @@ libtest.so: main.o py_functions.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
 
 # cython files
-if_main.cpp if_main.h: if_main.pyx
+main.pxd: main.h
+	$(PXDGEN) $< -o $@
+
+py_functions.pxd: py_functions.h
+	$(PXDGEN) $< -o $@
+
+if_main.cpp if_main.h: if_main.pyx main.pxd py_functions.pxd
 	$(CYTHON) $(CYTHONFLAGS) $<
 
 if_main.o: if_main.cpp main.h py_functions.h
@@ -31,7 +38,7 @@ if_main.o: if_main.cpp main.h py_functions.h
 if_main.so: if_main.o libtest.so
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@ $(MODLDFLAGS)
 
-if_math.cpp: if_math.pyx
+if_math.cpp: if_math.pyx main.pxd py_functions.pxd
 	$(CYTHON) $(CYTHONFLAGS) $<
 
 if_math.o: if_math.cpp main.h py_functions.h
@@ -40,7 +47,7 @@ if_math.o: if_math.cpp main.h py_functions.h
 if_math.so: if_math.o libtest.so
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@ $(MODLDFLAGS)
 
-if_strings.cpp: if_strings.pyx
+if_strings.cpp: if_strings.pyx main.pxd py_functions.pxd
 	$(CYTHON) $(CYTHONFLAGS) $<
 
 if_strings.o: if_strings.cpp main.h py_functions.h
@@ -51,4 +58,4 @@ if_strings.so: if_strings.o libtest.so
 
 .PHONY: clean
 clean:
-	rm -rf if_main.cpp if_math.cpp if_strings.cpp *.o *.so cython_debug
+	rm -rf if_*.cpp *.o *.so *.pxd cython_debug

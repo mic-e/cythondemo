@@ -6,24 +6,40 @@
 
 #include "Python.h"
 
-namespace test {
+/* pxd:
+ *
+ * from libcpp.vector cimport vector
+ * from libcpp.string cimport string
+ *
+ */
 
-void add_callback(PyObject *fun);
+namespace test {
 
 class Args {
 public:
 	int thatnumber;
 };
 
+/* pxd:
+ *
+ * struct Args:
+ *     int thatnumber
+ */
+
 /**
  * squares the given number.
  */
 unsigned square(unsigned number);
 
+// pxd: unsigned square(unsigned number)
+
 extern std::vector<std::string> inputstrings;
+
+// pxd: vector[string] inputstrings
 
 int main(Args args);
 
-} // namespace test
+// pxd: int main(Args args)
 
+} // namespace test
 #endif
