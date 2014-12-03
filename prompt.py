@@ -10,6 +10,8 @@ def init_readline():
 
     history = "/tmp/oahistory"
 
+    readline.set_history_length(20000)
+
     def save_history():
         readline.write_history_file(history)
 
