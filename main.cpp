@@ -1,16 +1,10 @@
+#include "main.h"
+
 #include <iostream>
 #include <vector>
 #include <string>
 
-#include <Python.h>
-
-#include "test.h"
-
-#ifndef DL_IMPORT
-// for some reason DL_IMPORT isn't defined on my system...
-#define DL_IMPORT(x) x
-#endif
-#include "interface.h"
+#include "py_functions.h"
 
 using namespace std;
 
@@ -24,9 +18,9 @@ unsigned square(unsigned number) {
 
 void process_input(string s) {
 	if (s == "p") {
-		py_interact();
+		py_functions::interact();
 	} else {
-		s = py_invoke_callbacks(s);
+		s = py_functions::invoke_callbacks(s);
 		inputstrings.push_back(s);
 		cout << "processed input: " << s << endl;
 	}
@@ -35,7 +29,7 @@ void process_input(string s) {
 int main(Args args) {
 	//asm volatile ("int3;");
 
-	py_print_square(args.thatnumber);
+	py_functions::print_square(args.thatnumber);
 
 	cout << "type p to enter interactive python interp, anything else to add strings" << endl;
 
@@ -57,4 +51,3 @@ int main(Args args) {
 }
 
 } // namespace test
-

@@ -1,10 +1,9 @@
 .*.swp
 *.so
 *.o
-interface.h
-interface.cpp
-main.cpp
-main.h
+if_main.cpp
+if_math.cpp
+if_strings.cpp
 __pycache__
 *.pyo
 *.pyc

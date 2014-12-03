@@ -1,5 +1,5 @@
-#ifndef TEST_H_
-#define TEST_H_
+#ifndef MAIN_H_
+#define MAIN_H_
 
 #include <vector>
 #include <string>
@@ -12,9 +12,6 @@ void add_callback(PyObject *fun);
 
 class Args {
 public:
-	int exit;
-	int exitcode;
-
 	int thatnumber;
 };
 

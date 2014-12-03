@@ -1,13 +1,11 @@
 def main():
-    from . import interface
-    interface.main(handle_args())
-
-
-def handle_args():
     import argparse
     cli = argparse.ArgumentParser()
     cli.add_argument('--thatnumber', type=int, default=17)
-    return cli.parse_args()
+    args = cli.parse_args()
+
+    from .if_main import main
+    main(args)
 
 
 if __name__ == "__main__":

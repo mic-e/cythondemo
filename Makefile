@@ -9,23 +9,46 @@ CYTHON=cython
 CYTHONFLAGS=--gdb --cplus -3 --fast-fail
 
 .PHONY: all
-all: interface.so libtest.so
+all: libtest.so if_math.so if_main.so if_strings.so
 
-interface.cpp interface.h: interface.pyx
-	$(CYTHON) $(CYTHONFLAGS) $<
-
-test.o: test.cpp test.h interface.h
+# pure c++ files
+py_functions.o: py_functions.cpp py_functions.h
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-interface.o: interface.cpp test.h
+main.o: main.cpp main.h py_functions.h
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-libtest.so: test.o
+libtest.so: main.o py_functions.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
 
-interface.so: interface.o libtest.so
+# cython files
+if_main.cpp if_main.h: if_main.pyx
+	$(CYTHON) $(CYTHONFLAGS) $<
+
+if_main.o: if_main.cpp main.h py_functions.h
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+if_main.so: if_main.o libtest.so
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@ $(MODLDFLAGS)
+
+if_math.cpp: if_math.pyx
+	$(CYTHON) $(CYTHONFLAGS) $<
+
+if_math.o: if_math.cpp main.h py_functions.h
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+if_math.so: if_math.o libtest.so
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@ $(MODLDFLAGS)
+
+if_strings.cpp: if_strings.pyx
+	$(CYTHON) $(CYTHONFLAGS) $<
+
+if_strings.o: if_strings.cpp main.h py_functions.h
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+if_strings.so: if_strings.o libtest.so
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@ $(MODLDFLAGS)
 
 .PHONY: clean
 clean:
-	rm -rf interface.cpp interface.h interface.cpp *.o cython_debug *.so
+	rm -rf if_main.cpp if_math.cpp if_strings.cpp *.o *.so cython_debug
