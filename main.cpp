@@ -27,8 +27,6 @@ void process_input(string s) {
 }
 
 int main(Args args) {
-	//asm volatile ("int3;");
-
 	py_functions::print_square(args.thatnumber);
 
 	cout << "type p to enter interactive python interp, anything else to add strings" << endl;

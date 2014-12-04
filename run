@@ -1,0 +1,14 @@
+#!/bin/bash
+if [ -z "$PYTHON_INTERP" ]; then
+	PYTHON_INTERP=python3
+fi
+
+if [ "$1" == "--no-main" ]; then
+	INVOCATION=
+	shift
+else
+	INVOCATION="-m demo"
+fi
+
+echo LD_LIBRARY_PATH=. $DEBUGGER "$PYTHON_INTERP" $INVOCATION "$@"
+LD_LIBRARY_PATH=. exec $DEBUGGER "$PYTHON_INTERP" $INVOCATION "$@"

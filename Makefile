@@ -4,7 +4,7 @@ PYTHONINCDIR=/usr/include/$(PYTHON)
 CXX=g++
 CXXFLAGS=-std=c++11 -Wall -Wextra -pedantic -fPIC -O1 -g -I$(PYTHONINCDIR)
 LDFLAGS=--shared
-MODLDFLAGS=-Wl,-rpath,.
+MODLDFLAGS=
 CYTHON=cython
 CYTHONFLAGS=--gdb --cplus -3 --fast-fail
 PXDGEN=python3 pxdgen.py
