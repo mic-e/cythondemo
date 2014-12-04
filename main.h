@@ -4,8 +4,6 @@
 #include <vector>
 #include <string>
 
-#include "Python.h"
-
 /* pxd:
  *
  * from libcpp.vector cimport vector
