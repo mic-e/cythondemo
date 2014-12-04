@@ -6,7 +6,7 @@ import re
 import os
 
 from pygments.token import Token
-from pygments.lexers.c_cpp import CppLexer
+from pygments.lexers import get_lexer_for_filename
 
 
 class ParserError(Exception):
@@ -61,7 +61,7 @@ class PXDGenerator:
         # we're using the pygments lexer (mainly because that was the first
         # google hit for 'python c++ lexer', and it's fairly awesome to use)
 
-        lexer = CppLexer()
+        lexer = get_lexer_for_filename('.cpp')
 
         with open(self.infilename) as infile:
             code = infile.read()
@@ -124,23 +124,24 @@ class PXDGenerator:
         Handles any comment, with its format characters removed,
         extracting the pxd annotation
         """
-        try:
-            annotation = re.match('^.*pxd:\\s(.*)$', val, re.DOTALL).group(1)
-        except AttributeError as ex:
-            raise self.parser_error(
-                "comment contains no valid pxd annotation:\n" + val) from ex
+        annotations = re.findall('pxd:\\s(.*?)(:pxd|$)', val, re.DOTALL)
+        annotations = [annotation[0] for annotation in annotations]
 
-        # remove empty lines at end
-        annotation = annotation.rstrip()
+        if not annotations:
+            raise self.parser_error("comment contains no valid pxd annotation")
 
-        annotation_lines = annotation.split('\n')
-        for idx, line in enumerate(annotation_lines):
-            if line.strip() != "":
-                # we've found the first non-empty annotation line
-                self.add_annotation(annotation_lines[idx:])
-                return
+        for annotation in annotations:
+            # remove empty lines at end
+            annotation = annotation.rstrip()
 
-        raise self.parser_error("pxd annotation is empty:\n" + val)
+            annotation_lines = annotation.split('\n')
+            for idx, line in enumerate(annotation_lines):
+                if line.strip() != "":
+                    # we've found the first non-empty annotation line
+                    self.add_annotation(annotation_lines[idx:])
+                    break
+            else:
+                raise self.parser_error("pxd annotation is empty:\n" + val)
 
     def add_annotation(self, annotation_lines):
         """
