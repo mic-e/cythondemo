@@ -1,151 +1,286 @@
+"""
+Auto-generates PXD files from annotated C++ headers.
+"""
+
 import re
+import os
+
+from pygments.token import Token
+from pygments.lexers.c_cpp import CppLexer
+
+
+class ParserError(Exception):
+    """
+    Represents a fatal parsing error in PXDGenerator.
+    """
+    def __init__(self, filename, lineno, message):
+        super().__init__("{}:{} {}".format(filename, lineno, message))
 
 
 class PXDGenerator:
-    def __init__(self, infilename, outfilename):
-        # input header file
-        self.infilename = infilename
+    """
+    Represents, and performs, a single conversion of a C++ header file to a
+    PXD file.
 
-        # output pxd file
+    @param infilename:
+        input (C++ header) file name. is opened and read.
+    @param outfilename:
+        output (pxd) file name. is opened and written.
+    """
+
+    def __init__(self, infilename, outfilename):
+        self.infilename = infilename
         self.outfilename = outfilename
 
+        # current parsing state (not valid until self.parse() is called)
+        self.stack, self.lineno, self.annotations = None, None, None
+
+    def parser_error(self, message, lineno=None):
+        """
+        Returns a ParserError object for this generator, at the current line.
+        """
+        if lineno is None:
+            lineno = self.lineno
+
+        return ParserError(self.infilename, lineno, message)
+
+    def tokenize(self):
+        """
+        Tokenizes the input file.
+
+        Yields (tokentype, val) pairs, where val is a string.
+
+        The concatenation of all val strings is equal to the input file's
+        content.
+        """
         # contains all namespaces and other '{' tokens
         self.stack = []
-
         # current line number
         self.lineno = 1
 
-    def parse(self):
         # we're using the pygments lexer (mainly because that was the first
         # google hit for 'python c++ lexer', and it's fairly awesome to use)
-        import pygments
-        from pygments.lexers.c_cpp import CppLexer
-
-        # 0: expect 'namespace'
-        # 1: expect namespace name
-        # 2: expect {
-        state = 0
 
         lexer = CppLexer()
-        Token = pygments.token.Token
 
-        with open(self.infilename) as f:
-            code = f.read()
+        with open(self.infilename) as infile:
+            code = infile.read()
 
         for token, val in lexer.get_tokens(code):
+            # ignore whitespaces
+            yield token, val
+            self.lineno += val.count('\n')
+
+    def handle_singleline_comment(self, val):
+        """
+        Breaks down a '//'-style single-line comment, and passes the result
+        to handle_comment()
+
+        @param val:
+            the comment text, as string, including the '//'
+        """
+        try:
+            val = re.match('^// (.*)$', val).group(1)
+        except AttributeError as ex:
+            raise self.parser_error("invalid single-line comment") from ex
+
+        self.handle_comment(val)
+
+    def handle_multiline_comment(self, val):
+        """
+        Breaks down a '/* */'-style multi-line comment, and passes the result
+        to handle_comment()
+
+        @param val:
+            the comment text, as string, including the '/*' and '*/'
+        """
+        try:
+            val = re.match('^/\\*(.*)\\*/$', val, re.DOTALL).group(1)
+        except AttributeError as ex:
+            raise self.parser_error("invalid multi-line comment") from ex
+
+        # for a comment '/* foo\n * bar\n */', val is now 'foo\n * bar\n '
+        # however, we'd prefer ' * foo\n * bar'
+        val = ' * ' + val.rstrip()
+        # actually, we'd prefer [' * foo', ' * bar'].
+        lines = val.split('\n')
+
+        comment_lines = []
+        for idx, line in enumerate(lines):
+            try:
+                line = re.match('^ \\*( (.*))?$', line).group(2) or ""
+            except AttributeError as ex:
+                raise self.parser_error("invalid multi-line comment line",
+                                        idx + self.lineno) from ex
+
+            # if comment is still empty, don't append anything
+            if comment_lines or line.strip() != "":
+                comment_lines.append(line)
+
+        self.handle_comment('\n'.join(comment_lines).rstrip())
+
+    def handle_comment(self, val):
+        """
+        Handles any comment, with its format characters removed,
+        extracting the pxd annotation
+        """
+        try:
+            annotation = re.match('^.*pxd:\\s(.*)$', val, re.DOTALL).group(1)
+        except AttributeError as ex:
+            raise self.parser_error(
+                "comment contains no valid pxd annotation:\n" + val) from ex
+
+        # remove empty lines at end
+        annotation = annotation.rstrip()
+
+        annotation_lines = annotation.split('\n')
+        for idx, line in enumerate(annotation_lines):
+            if line.strip() != "":
+                # we've found the first non-empty annotation line
+                self.add_annotation(annotation_lines[idx:])
+                return
+
+        raise self.parser_error("pxd annotation is empty:\n" + val)
+
+    def add_annotation(self, annotation_lines):
+        """
+        Adds a (current namespace, pxd annotation) tuple to self.annotations.
+        """
+        if "{" in self.stack:
+            raise self.parser_error("PXD annotation is brace-enclosed")
+        elif not self.stack:
+            namespace = None
+        else:
+            namespace = "::".join(self.stack)
+
+        self.annotations.append((namespace, annotation_lines))
+
+    def handle_token(self, token, val):
+        """
+        Handles one token while the parser is in its regular state.
+
+        Returns the new state integer.
+        """
+        # accept any token here
+        if token == Token.Keyword and val == 'namespace':
+            # advance to next state on 'namespace'
+            return 1
+
+        elif (token, val) == (Token.Punctuation, '{'):
+            self.stack.append('{')
+
+        elif (token, val) == (Token.Punctuation, '}'):
+            try:
+                self.stack.pop()
+            except IndexError as ex:
+                raise self.parser_error("unmatched '}'") from ex
+
+        elif token == Token.Comment.Single and 'pxd:' in val:
+            self.handle_singleline_comment(val)
+
+        elif token == Token.Comment.Multiline and 'pxd:' in val:
+            self.handle_multiline_comment(val)
+
+        else:
+            # we don't care about all those other tokens
+            pass
+
+        return 0
+
+    def parse(self):
+        """
+        Parses the input file.
+
+        Internally calls self.tokenize().
+
+        Adds all found PXD annotations to self.annotations,
+        together with info about the namespace in which they were encountered.
+        """
+
+        self.annotations = []
+        state = 0
+
+        for token, val in self.tokenize():
             # ignore whitespaces
             if token == Token.Text and not val.strip():
                 continue
 
             if state == 0:
-                # allow anything
-                if token == Token.Keyword and val == 'namespace':
-                    # advance to next state on 'namespace'
-                    state = 1
-                elif (token, val) == (Token.Punctuation, '{'):
-                    self.stack.append('{')
-                elif (token, val) == (Token.Punctuation, '}'):
-                    if not self.stack:
-                        raise Exception("unmatched '}'")
-                    self.stack.pop()
-                elif token == Token.Comment.Single and 'pxd:' in val:
-                    m = re.match('^// pxd: (.*)$', val)
-                    if not m:
-                        raise Exception("invalid single-line pxd annotation")
+                state = self.handle_token(token, val)
 
-                    yield [m.group(1)]
-                elif token == Token.Comment.Multiline and 'pxd:' in val:
-                    m = re.match('^/\* pxd:\n((.*\n)+) \*/$', val)
-                    if not m:
-                        raise Exception("invalid multi-line pxd annotation")
-                    lines = m.group(1).rstrip('\n').split('\n')
-                    annotations = []
-                    first_nonempty, last_nonempty = None, None
-                    for idx, line in enumerate(lines):
-                        m = re.match('^ \*( (.*))?$', line)
-                        if not m:
-                            raise Exception(
-                                "invalid multi-line pxd annotation: " +
-                                "error in line {}".format(idx + self.lineno))
-
-                        annotation = m.group(2)
-                        if annotation:
-                            if not first_nonempty:
-                                first_nonempty = idx
-                            last_nonempty = idx
-                        annotations.append(annotation)
-
-                    if not first_nonempty:
-                        # none of the annotations was valid
-                        raise Exception("empty multi-line pxd annotation")
-
-                    yield annotations[first_nonempty:last_nonempty + 1]
-                else:
-                    # we don't care about other tokens
-                    pass
-
-                self.lineno += val.count('\n')
             elif state == 1:
-                # expect Token.Name
+                # we're inside a namespace definition; expect Token.Name
                 if token != Token.Name:
-                    raise Exception("expected identifier after 'namespace'")
+                    raise self.parser_error(
+                        "expected identifier after 'namespace'")
                 state = 2
                 self.stack.append(val)
+
             elif state == 2:
                 # expect {
                 if (token, val) != (Token.Punctuation, '{'):
-                    raise Exception("expected '{' after 'namespace " +
-                                    self.stack[-1] + "'")
+                    raise self.parser_error("expected '{' after 'namespace " +
+                                            self.stack[-1] + "'")
                 state = 0
 
         if self.stack:
-            raise Exception("expected '}', but found EOF")
+            raise self.parser_error("expected '}', but found EOF")
 
-    def process(self):
+    def get_pxd_lines(self):
+        """
+        calls self.parse() and processes the pxd annotations to pxd code lines.
+        """
+
         yield "# this PXD definition file was auto-generated from {}".format(
             self.infilename)
 
-        try:
-            # namespace of the previous pxd annotation
-            previous_namespace = None
+        self.parse()
 
-            for annotations in self.parse():
+        # namespace of the previous pxd annotation
+        previous_namespace = None
+
+        for namespace, annotation_lines in self.annotations:
+            yield ""
+
+            if namespace != previous_namespace:
                 yield ""
 
-                if "{" in self.stack:
-                    raise Exception("PXD annotation is brace-enclosed")
-                elif not self.stack:
-                    namespace = None
-                else:
-                    namespace = "::".join(self.stack)
+            if namespace:
+                prefix = "    "
 
                 if namespace != previous_namespace:
-                    yield ""
+                    yield 'cdef extern from "{}" namespace "{}":'.format(
+                        os.path.relpath(self.infilename,
+                                        os.path.dirname(self.outfilename)),
+                        namespace)
+            else:
+                prefix = ""
 
-                if namespace:
-                    prefix = "    "
+            for annotation in annotation_lines:
+                yield prefix + annotation
 
-                    if namespace != previous_namespace:
-                        yield 'cdef extern from "{}" namespace "{}":'.format(
-                            os.path.relpath(self.infilename,
-                                            os.path.dirname(self.outfilename)),
-                            namespace)
-                else:
-                    prefix = ""
+            previous_namespace = namespace
 
-                for annotation in annotations:
-                    yield prefix + annotation
+    def generate(self):
+        """
+        reads the input file and writes the output file.
 
-                previous_namespace = namespace
+        on parsing failure, raises ParserError
+        """
+        try:
+            with open(self.outfilename, 'w') as outfile:
+                for line in self.get_pxd_lines():
+                    outfile.write(line)
+                    outfile.write('\n')
 
-        except Exception as e:
-            raise Exception(self.infilename + ":" + str(self.lineno) + " " +
-                            e.args[0]) from e
+        except ParserError:
+            os.remove(self.outfilename)
+            raise
 
 
-if __name__ == '__main__':
+def main():
+    """ main function """
     import argparse
-    import os
 
     cli = argparse.ArgumentParser()
     cli.add_argument('input', help="input header file")
@@ -157,12 +292,7 @@ if __name__ == '__main__':
     if outfilename is None:
         outfilename = os.path.splitext(infilename)[0] + '.pxd'
 
-    if outfilename == '-':
-        import sys
-        outfile = sys.stdout
-    else:
-        outfile = open(outfilename, 'w')
+    PXDGenerator(infilename, outfilename).generate()
 
-    for line in PXDGenerator(infilename, outfilename).process():
-        outfile.write(line)
-        outfile.write('\n')
+if __name__ == '__main__':
+    main()
