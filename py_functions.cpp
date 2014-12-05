@@ -16,6 +16,11 @@ void (*interact)() = [](){
 	cout << "py_interact dummy function" << endl;
 };
 
+int (*exctest)(int) = [](int) {
+	cout << "py_exctest dummy function" << endl;
+	return 0;
+};
+
 std::string (*invoke_callbacks)(std::string) = [](std::string) -> std::string {
 	cout << "py_invoke_callbacks dummy function" << endl;
 	return "";

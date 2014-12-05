@@ -1,8 +1,13 @@
+"""
+
+"""
+
 import code
 import readline
 import rlcompleter
 import os
 import sys
+from . import interactivenamespace
 
 
 def init_readline():
@@ -20,9 +25,8 @@ def init_readline():
 
     atexit.register(save_history)
 
-    from . import interactivenamespace
-    ns = vars(interactivenamespace)
-    readline.set_completer(rlcompleter.Completer(ns).complete)
+    namespace = vars(interactivenamespace)
+    readline.set_completer(rlcompleter.Completer(namespace).complete)
     readline.parse_and_bind("tab: complete")
 
 
@@ -41,7 +45,6 @@ init_prompt()
 
 
 def interact():
-    from . import interactivenamespace
     code.interact("", local=vars(interactivenamespace))
 
 

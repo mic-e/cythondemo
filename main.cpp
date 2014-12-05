@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <stdexcept>
 
 #include "py_functions.h"
 
@@ -26,7 +27,17 @@ void process_input(string s) {
 	}
 }
 
+void raise_exc(string what) {
+	throw runtime_error(what);
+}
+
 int main(Args args) {
+	try {
+		cout << "exctest returned " << py_functions::exctest(1337) << endl;
+	} catch (std::exception &e) {
+		cout << e.what() << endl;
+	}
+
 	py_functions::print_square(args.thatnumber);
 
 	cout << "type p to enter interactive python interp, anything else to add strings" << endl;

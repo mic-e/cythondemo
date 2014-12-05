@@ -10,12 +10,14 @@ namespace py_functions {
 
 extern void (*print_square)(int);
 extern void (*interact)();
+extern int (*exctest)(int);
 extern std::string (*invoke_callbacks)(std::string);
 
 /* pxd:
  *
  * void (*print_square)(int)
  * void (*interact)()
+ * int (*exctest)(int)
  * string (*invoke_callbacks)(string)
  */
 
