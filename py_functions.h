@@ -23,36 +23,45 @@ public:
 		this->ptr = ptr;
 	}
 
-	ReturnType operator ()(ArgTypes ...args);
+	ReturnType operator ()(ArgTypes ...args) {
+		if (this->ptr == nullptr) {
+			throw std::runtime_error("function ptr is nullptr");
+		}
+
+		ReturnType result = this->ptr(std::forward<ArgTypes>(args)...);
+
+		if (PyErr_Occurred()) {
+			throw_from_py_err();
+		}
+
+		return result;
+	}
 };
 
-template<typename ReturnType, typename ...ArgTypes>
-ReturnType PyFunc<ReturnType, ArgTypes...>::operator ()(ArgTypes ...args) {
-	if (this->ptr == nullptr) {
-		throw std::runtime_error("function ptr is nullptr");
-	}
-
-	ReturnType result = this->ptr(std::forward<ArgTypes>(args)...);
-
-	if (PyErr_Occurred()) {
-		throw_from_py_err();
-	}
-
-	return result;
-}
 
 template<typename ...ArgTypes>
-void PyFunc<void, ArgTypes...>::operator ()(ArgTypes ...args) {
-	if (this->ptr == nullptr) {
-		throw std::runtime_error("function ptr is nullptr");
+class PyFunc<void, ArgTypes ...> {
+private:
+	void (*ptr)(ArgTypes ...) = nullptr;
+
+public:
+	void operator =(void (*ptr)(ArgTypes ...)) {
+		this->ptr = ptr;
 	}
 
-	this->ptr(std::forward<ArgTypes>(args)...);
+	void operator ()(ArgTypes ...args) {
+		if (this->ptr == nullptr) {
+			throw std::runtime_error("function ptr is nullptr");
+		}
 
-	if (PyErr_Occurred()) {
-		throw_from_py_err();
+		this->ptr(std::forward<ArgTypes>(args)...);
+
+		if (PyErr_Occurred()) {
+			throw_from_py_err();
+		}
 	}
-}
+};
+
 
 /**
  * prints the square of a given number, using python .format() and test::square()
