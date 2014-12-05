@@ -27,15 +27,11 @@ void process_input(string s) {
 	}
 }
 
-void raise_exc(string what) {
-	throw runtime_error(what);
-}
-
 int main(Args args) {
 	try {
 		cout << "exctest returned " << py_functions::exctest(1337) << endl;
-	} catch (std::exception &e) {
-		cout << e.what() << endl;
+	} catch (runtime_error &e) {
+		cout << "exception during exctest: " << e.what() << endl;
 	}
 
 	py_functions::print_square(args.thatnumber);
@@ -53,7 +49,11 @@ int main(Args args) {
 			break;
 		}
 
-		test::process_input(l);
+		try {
+			test::process_input(l);
+		} catch (runtime_error &e) {
+			cout << "error processing line: " << e.what() << endl;
+		}
 	}
 
 	return 0;

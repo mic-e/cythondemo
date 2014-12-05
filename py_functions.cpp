@@ -8,22 +8,14 @@ using namespace std;
 namespace test {
 namespace py_functions {
 
-void (*print_square)(int) = [](int){
-	cout << "py_print_square dummy function" << endl;
-};
+void translate_py_exc() {
+	PyErr_Clear();
+	throw runtime_error("PyErr_Occured");
+}
 
-void (*interact)() = [](){
-	cout << "py_interact dummy function" << endl;
-};
-
-int (*exctest)(int) = [](int) {
-	cout << "py_exctest dummy function" << endl;
-	return 0;
-};
-
-std::string (*invoke_callbacks)(std::string) = [](std::string) -> std::string {
-	cout << "py_invoke_callbacks dummy function" << endl;
-	return "";
-};
+PyFunc<int, int> print_square;
+PyFunc<int> interact;
+PyFunc<int, int> exctest;
+PyFunc<std::string, std::string> invoke_callbacks;
 
 }} // namespace test::py_functions

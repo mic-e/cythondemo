@@ -17,12 +17,9 @@ def append_string(s):
 callbacks = []
 
 
-cdef string invoke_callbacks(string s):
+cdef string invoke_callbacks(string s) except*:
     for cb in callbacks:
-        try:
-            s = cb(s.decode()).encode()
-        except:
-            traceback.print_exc()
+        s = cb(s.decode()).encode()
 
     return s
 
