@@ -10,10 +10,9 @@ def main(args):
     c_main(c_args)
 
 
-cdef int interact() except*:
+cdef void interact() except*:
     from .prompt import interact
     interact()
-    return 0
 
 
 cdef int exctest(int arg) except*:

@@ -66,16 +66,16 @@ public:
 /**
  * prints the square of a given number, using python .format() and test::square()
  *
- * pxd: int (*print_square)(int) except*
+ * pxd: void (*print_square)(int) except*
  */
-extern PyFunc<int, int> print_square;
+extern PyFunc<void, int> print_square;
 
 /**
  * launches the interactive console
  *
- * pxd: int (*interact)() except*
+ * pxd: void (*interact)() except*
  */
-extern PyFunc<int> interact;
+extern PyFunc<void> interact;
 
 /**
  * test function that raises a Python exception

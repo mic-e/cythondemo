@@ -5,9 +5,8 @@ def square(unsigned number):
     return c_square(number)
 
 
-cdef int print_square(int thatnumber) except*:
+cdef void print_square(int thatnumber) except*:
     print("square of {}: {}".format(thatnumber, c_square(thatnumber)))
-    return 0
 
 
 # register functions with C++

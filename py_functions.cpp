@@ -13,8 +13,8 @@ void throw_from_py_err() {
 	throw runtime_error("PyErr_Occured");
 }
 
-PyFunc<int, int> print_square;
-PyFunc<int> interact;
+PyFunc<void, int> print_square;
+PyFunc<void> interact;
 PyFunc<int, int> exctest;
 PyFunc<std::string, std::string> invoke_callbacks;
 
