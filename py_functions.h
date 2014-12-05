@@ -11,7 +11,7 @@
 namespace test {
 namespace py_functions {
 
-void translate_py_exc();
+void throw_from_py_err();
 
 template<typename ReturnType, typename ...ArgTypes>
 class PyFunc {
@@ -23,23 +23,36 @@ public:
 		this->ptr = ptr;
 	}
 
-	ReturnType operator ()(ArgTypes ...args) {
-		if (ptr == nullptr) {
-			throw std::runtime_error("function ptr is nullptr");
-		}
+	ReturnType operator ()(ArgTypes ...args);
+};
 
-		// TODO this doesn't work for void ReturnType
-		ReturnType result = this->ptr(std::forward<ArgTypes>(args)...);
-
-		if (PyErr_Occurred()) {
-			translate_py_exc();
-		}
-
-		return result;
+template<typename ReturnType, typename ...ArgTypes>
+ReturnType PyFunc<ReturnType, ArgTypes...>::operator ()(ArgTypes ...args) {
+	if (this->ptr == nullptr) {
+		throw std::runtime_error("function ptr is nullptr");
 	}
 
-	static void handle_py_exc();
-};
+	ReturnType result = this->ptr(std::forward<ArgTypes>(args)...);
+
+	if (PyErr_Occurred()) {
+		throw_from_py_err();
+	}
+
+	return result;
+}
+
+template<typename ...ArgTypes>
+void PyFunc<void, ArgTypes...>::operator ()(ArgTypes ...args) {
+	if (this->ptr == nullptr) {
+		throw std::runtime_error("function ptr is nullptr");
+	}
+
+	this->ptr(std::forward<ArgTypes>(args)...);
+
+	if (PyErr_Occurred()) {
+		throw_from_py_err();
+	}
+}
 
 /**
  * prints the square of a given number, using python .format() and test::square()

@@ -8,7 +8,7 @@ using namespace std;
 namespace test {
 namespace py_functions {
 
-void translate_py_exc() {
+void throw_from_py_err() {
 	PyErr_Clear();
 	throw runtime_error("PyErr_Occured");
 }
