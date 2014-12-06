@@ -4,14 +4,12 @@
 #include <string>
 #include <stdexcept>
 
-#include <Python.h>
-
 // pxd: from libcpp.string cimport string
 
 namespace test {
 namespace py_functions {
 
-void throw_from_py_err();
+void throw_py_err_as_cpp_exc();
 
 template<typename ReturnType, typename ...ArgTypes>
 class PyFunc {
@@ -30,9 +28,7 @@ public:
 
 		ReturnType result = this->ptr(std::forward<ArgTypes>(args)...);
 
-		if (PyErr_Occurred()) {
-			throw_from_py_err();
-		}
+		throw_py_err_as_cpp_exc();
 
 		return result;
 	}
@@ -56,9 +52,7 @@ public:
 
 		this->ptr(std::forward<ArgTypes>(args)...);
 
-		if (PyErr_Occurred()) {
-			throw_from_py_err();
-		}
+		throw_py_err_as_cpp_exc();
 	}
 };
 
