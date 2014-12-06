@@ -15,29 +15,45 @@ Sample session
 --------------
 
     mic@mic ~/git/cythondemo $ ./run --help
+    LD_LIBRARY_PATH=. python3 -m demo --help
     usage: __main__.py [-h] [--thatnumber THATNUMBER]
 
     optional arguments:
     -h, --help            show this help message and exit
     --thatnumber THATNUMBER
-    mic@mic ~/git/cythondemo $ ./run
-    LD_LIBRARY_PATH=. python3 -m demo
-    exception during exctest: PyErr_Occured
+    mic@mic ~/git/cythondemo $ ./run --thatnumber=17
+    LD_LIBRARY_PATH=. python3 -m demo --thatnumber=17
+    exception during exctest: python exception: <class 'Exception'>: your mom is fat
     square of 17: 289
     type p to enter interactive python interp, anything else to add strings
-    > p
-    >>> 
-    > testinput
-    processed input: testinput
+    > teststring
+    processed input: teststring
     > p
     >>> if_strings.callbacks.append(lambda s: s.upper())
     >>> 
-    > testinput
-    processed input: TESTINPUT
+    > teststring
+    processed input: TESTSTRING
     > p
-    >>> if_strings.callbacks.append("this is not a function.")
+    >>> if_strings.callbacks.append(lambda s: len(s)/0)
     >>> 
-    > testinput
-    error processing line: PyErr_Occured
-    > p
+    > teststring
+    error processing line: python exception: <class 'ZeroDivisionError'>: division by zero
     > kthxbai
+
+Build process
+-------------
+
+    python3 pxdgen.py main.h -o main.pxd
+    python3 pxdgen.py py_functions.h -o py_functions.pxd
+    cython --gdb --cplus -3 --fast-fail if_math.pyx
+    cython --gdb --cplus -3 --fast-fail if_main.pyx
+    cython --gdb --cplus -3 --fast-fail if_strings.pyx
+    g++ -std=c++11 -fPIC -I/usr/include/python3.4m -c main.cpp -o main.o
+    g++ -std=c++11 -fPIC -I/usr/include/python3.4m -c py_functions.cpp -o py_functions.o
+    g++ -std=c++11 -fPIC -I/usr/include/python3.4m --shared main.o py_functions.o -o libtest.so
+    g++ -std=c++11 -fPIC -I/usr/include/python3.4m -c if_main.cpp -o if_main.o
+    g++ -std=c++11 -fPIC -I/usr/include/python3.4m -c if_math.cpp -o if_math.o
+    g++ -std=c++11 -fPIC -I/usr/include/python3.4m -c if_strings.cpp -o if_strings.o
+    g++ -std=c++11 -fPIC -I/usr/include/python3.4m --shared if_main.o libtest.so -o if_main.so 
+    g++ -std=c++11 -fPIC -I/usr/include/python3.4m --shared if_math.o libtest.so -o if_math.so 
+    g++ -std=c++11 -fPIC -I/usr/include/python3.4m --shared if_strings.o libtest.so -o if_strings.so 
